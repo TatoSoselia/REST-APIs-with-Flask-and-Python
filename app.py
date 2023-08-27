@@ -1,10 +1,11 @@
 from flask import Flask, jsonify
 from flask_smorest import Api
 from flask_jwt_extended import JWTManager
-from flask_migrate import Migrate
-
-from db import db
 from blocklist import BLOCKLIST
+from flask_migrate import Migrate
+from db import db
+import os
+
 
 from resources.user import blp as UserBlueprint
 from resources.item import blp as ItemBlueprint
@@ -20,11 +21,11 @@ def create_app(db_url=None):
     app.config["OPENAPI_URL_PREFIX"] = "/"
     app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
     app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or "sqlite:///data.db"
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["PROPAGATE_EXCEPTIONS"] = True
     db.init_app(app)
-    migrate = Migrate(app,db)
+    migrate = Migrate(app, db)
     api = Api(app)
 
     app.config["JWT_SECRET_KEY"] = "jose"
@@ -92,6 +93,10 @@ def create_app(db_url=None):
 
     # JWT configuration ends
 
+    with app.app_context():
+        import models  # noqa: F401
+
+        db.create_all()
 
     api.register_blueprint(UserBlueprint)
     api.register_blueprint(ItemBlueprint)
