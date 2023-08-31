@@ -7,3 +7,4 @@ Flask-JWT-Extended
 passlib
 Flask-Migrate
 gunicorn
+psycopg2
